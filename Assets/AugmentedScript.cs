@@ -15,12 +15,13 @@ public class AugmentedScript : MonoBehaviour
     private GameObject InfoTextObject;
     private GameObject LatTextObject;
     private GameObject LongTextObject;
-    private double distanceTraveled;
+    private GameObject MarkerTextObject;
+    //private float distanceTraveled;
 
     private bool setOriginalValues = true;
 
-    private Vector3 targetPosition;
-    private Vector3 originalPosition;
+    private Vector3 markerTargetPosition;
+    private Vector3 markerOriginalPosition;
 
     private float speed = .1f;
     private bool locationServiceStarted = false;
@@ -78,12 +79,12 @@ public class AugmentedScript : MonoBehaviour
           Mathf.Cos(lat1 * Mathf.PI / 180) * Mathf.Cos(lat2 * Mathf.PI / 180) *
           Mathf.Sin(dLon / 2) * Mathf.Sin(dLon / 2);
         var c = 2 * Mathf.Atan2(Mathf.Sqrt(a), Mathf.Sqrt(1 - a));
-        distanceTraveled = R * c;
-        distanceTraveled = distanceTraveled * 1000f; // meters
+        var distance = R * c;
+        distance = distance * 1000f; // meters
                                      //set the distanceTraveled text on the canvas
         //InfoTextObject.GetComponent<Text>().text = "Distance: " + distanceTraveled;
         //convert distanceTraveled from double to float
-        float distanceFloat = (float)distanceTraveled;
+        float distanceFloat = (float)distance;
         //set the target position of the ufo, this is where we lerp to in the update function
         //targetPosition = originalPosition - new Vector3(0, 0, distanceFloat * 12);
         //distanceTraveled was multiplied by 12 so I didn't have to walk that far to get the UFO to show up closer
@@ -99,6 +100,11 @@ public class AugmentedScript : MonoBehaviour
         InfoTextObject = GameObject.FindGameObjectWithTag("infoText");
         LatTextObject = GameObject.FindGameObjectWithTag("latText");
         LongTextObject = GameObject.FindGameObjectWithTag("longText");
+        MarkerTextObject = GameObject.FindGameObjectWithTag("markerText");
+
+        //Instanciate with the position of the marker in Unity at start
+        markerTargetPosition = transform.position;
+        markerOriginalPosition = transform.position;
 
         //InfoTextObject.GetComponent<Text>().text = "Info: App Started!";
         ////start GetCoordinate() function 
@@ -138,17 +144,20 @@ public class AugmentedScript : MonoBehaviour
             }
            
 
-           
+           float distanceTraveled = Calc(startLatitude, startLongitude, currentLatitude, currentLongitude);
+            //markerTargetPosition = markerOriginalPosition - new Vector3(0, 0, distanceTraveled * 12);
+            markerTargetPosition = markerOriginalPosition - new Vector3(0, 0, distanceTraveled * 10);
+            transform.position = Vector3.Lerp(transform.position, markerTargetPosition, speed);
 
-            distanceTraveled = Calc(startLatitude, startLongitude, currentLatitude, currentLongitude);
-            //float testCalc = Calc(currentLatitude, currentLongitude, currentLatitude, currentLongitude);
+            
 
             Debug.Log("Long: " + Input.location.lastData.longitude);
             Debug.Log("Lat: " + Input.location.lastData.latitude);
             InfoTextObject.GetComponent<Text>().text = "Distance traveled: " + distanceTraveled.ToString() + " m, GPS ready: " + gpsIsStabile.ToString();
             LongTextObject.GetComponent<Text>().text = "StartLong: " + startLongitude + " StartLat: " + startLatitude;
             LatTextObject.GetComponent<Text>().text = "CurrentLong: " + currentLongitude + " Currentlat: " + currentLatitude;
-
+            MarkerTextObject.GetComponent<Text>().text = "CurrentPos(x,y,z): (" + transform.position.x + "," + transform.position.y + "," + transform.position.z+")"
+                + " TargetPos(x,y,z):("+ markerTargetPosition.x + ","+ markerTargetPosition.y+","+ markerTargetPosition.z+")";
         }
 
 
